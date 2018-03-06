@@ -1,60 +1,67 @@
 PRO mk_master
+;this program will combine images to make the temprorary master frames
 
-;this program will combine images to make a master frame
+;if you use this code, please cite Oelkers & Stassun 2018
 
-;if you use this code, please cite Oelkers et al. 2015, AJ, 149, 50
+;;;;;;;;;;UPDATE HERE;;;;;;;;;
+;what field are you looking at?
+camera = '2'
+ccd = '2'
+blknum = 50 ;how many images go into each holder?
 
-;;;;UPDATE INFORMATION HERE;;;;;
-
+;this program will select the images to make the E and W master frames
 ;useful directories
-cdedir = '../IDL/' ;code directory
-caldir = '../calib/' ; directory to output the master frame
-clndir = '../clean/'; directory for the cleaned images
+cdedir = '.../code/master/' ;code directory
+clndir = '../clean/' ;directory where the cleaned images reside
 
-axs = 4096 ;; udpate here to change the image size
-;;;END UPDATE INFORMATION;;;;
+;;;;;;;END UPDATE;;;;;;;
 
+;get the image list and the number of files which need reduction
+readcol, cdedir+'images.dat', files, format = '(a)', /silent, count = nfiles
 
-print, 'Beginning to make the master frame at ', systime(), '.'
-        
-;change into the appropriate directory
-cd, clndir
-spawn, 'ls *.fits', files
-nfiles = n_elements(files)
-cd, cdedir
+;iterate through the files
+cnt = 0 ;counter for the number of images used
+kk = 0 ;the jumper for file placement
 
-;if no images then stop
-if nfiles eq 0 then begin
-	print, 'No files to combine.'
-	stop
-endif
+for ii =0l, nfiles-1 do begin
 
-;make a file holder
-mref = fltarr(axs, axs, nfiles)
-exps = fltarr(nfiles)
-print, 'Combining images at '+systime()+'.'  
+	if (ii eq 0) then begin  ; get size on first iteration only
+		img = readfits(clndir+files[0], head, /silent)
+		nxy = size(img)
+	        all_data = fltarr(nxy[1],nxy[2],blknum)
+		expt = fltarr(blknum)
+	endif
 
-for jj = 0L, nfiles -1 do begin
-    	img = readfits(clndir+files[jj], header,/silent) ; read in an image
-	exps[jj] = sxpar(header,'EXPTIME')
-    	mref[*,*,jj] = img ;place the image in an image array
+	;read in the image
+	img_data = readfits(clndir+files[ii], head, /silent)
+	expt[cnt] = sxpar(head, 'EXPOSURE')
+
+	;add the image to the vector
+	all_data[*,*,cnt] = img_data 
+	cnt = cnt+1
+
+	if (ii mod 10 eq 0) and (ii gt 0) then print, 'Finished with 10 images at '+systime()+'.'
+
+	if (ii eq nfiles-1) or ((ii+1) mod blknum eq 0) then begin
+		
+		;median combine the data
+		medarr, all_data, combined_data
+
+		; Write data to new file    
+		writefits, 'tmp_mst.fits', combined_data
+		mast = readfits('tmp_mst.fits', mhead, /silent)
+		sxaddpar, mhead, 'NUMCOMB', cnt
+		sxaddpar, mhead, 'EXPTIME', median(expt)
+
+		;print the file with the appropriate counter
+		if (kk lt 10) then writefits, cdedir+'frames/'+camera+'_'+ccd+'_master_0'+strcompress(kk, /remove_all)+'_idl.fits', mast, mhead
+		if (kk ge 10) and (kk lt 100) then writefits, cdedir+'frames/'+camera+'_'+ccd+'_master_'+strcompress(kk, /remove_all)+'_idl.fits', mast, mhead
+
+		print, "The master frame hold was created using a median of "+strcompress(cnt, /remove_all)+" images."
+		kk = kk+1
+		cnt = 0
+
+	endif
 endfor
-        
-print, 'Median-Combining the frames at '+systime()+'.'
-        
-;median the frame and then write the new image
-medarr, mref, ref
-expt = median(exps)
-
-;write the image and add information to the header
-writefits, caldir+'master.fits', ref
-hold = readfits(caldir+'master.fits', head, /silent)
-sxaddpar, head, 'EXPTIME', expt ; exposure time of the master
-sxaddpar, head, 'NUM_COM', nfiles ; number of files that were combiend
-writefits, caldir+'master.fits', hold, head
-
-print, 'Finished with the master frame at ', systime(),'.'
-
-print, 'All done! See ya later alligator.'
-
+print, 'All done at '+strcompress(systime(), /remove_all)+'. See ya later alligator!'
 END
