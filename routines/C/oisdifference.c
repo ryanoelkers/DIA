@@ -1,4 +1,8 @@
-// This code is a version of the Optimal Image Subtraction method detailed in Alard and Lupton 1998 and then reintroduced in Miller 2008. It uses a Delta Function Kernel to solve for the images offset and subtraction. It can be used for either a constant or space-varying kernel depending on how you set the code. I have tried to comment it the best I could so anyone can understand it.//
+// This code is a version of the Optimal Image Subtraction method detailed in Alard and Lupton 1998// 
+// and then reintroduced in Miller 2008. It uses a Delta Function Kernel to solve for the images offset //
+//and subtraction. It can be used for either a constant or space-varying kernel depending on how you set the code. //
+//I have tried to comment it the best I could so anyone can understand it. If you use this routine, you should cite://
+//Alard & Lupton 1998, Alard 2000, Miller+2008, Oelkers+2015, Oelkers & Stassun 2018//
 
 // Include the necessary libraries //
 #include <stdio.h>
