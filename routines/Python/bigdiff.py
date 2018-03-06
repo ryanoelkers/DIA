@@ -1,6 +1,6 @@
-#this program will run the difference image analysis from Oelkers et al. 2015
+#this program will run the difference image analysis
 
-#if you use this code, please cite Oelkers et al. 2015, AJ, 149, 50, Alard et al. 2000 and Miller et al. 2008
+#if you use this code, please cite Oelkers et al. 2015, AJ, 149, 50, Alard & Lupton 1998, Alard et al. 2000,  Miller et al. 2008 and Oelkers & Stassun 2018
 
 #import the relevant libraries for basic tools
 import numpy
@@ -27,39 +27,40 @@ from os import listdir
 from os.path import isfile, join, exists
 
 ###UPDATE HERE#####
-#compile the C differencing program
-compdiff = os.system('gcc oisdifference.c -L/usr/local/lib -I/usr/local/include -lcfitsio -lm')
+#compile the C differencing program --- you will need to change the directories where the cfitiso directory is kept
+compdiff = os.system('gcc oisdifference.c -L/usr/local/lib -I/usr/local/include -lcfitsio -lm -lcurl')
 
 #useful directories
-cdedir = '../Python/' #code directory
-caldir = '../calib/' # directory for the location of the master frame
+cdedir = '../code/diff/' #code directory
+caldir = '../code/master/fin/' # directory for the location of the master frame
 clndir = '../clean/'# directory of where the images are located
-difdir = '../diff/' # directory to put the differenced images
+difdir = '../dif/' # directory to put the differenced images
 
-#the optimal aperture to use from get_opt_rad.py
-rad = 3.0
+#the optimal aperture to use from refphot.py
+rad = 2.5
+
+#information for your current sector/camera
+camera = '2'
+ccd = '2'
 
 #size of the kernel, stamp and if you want an order
-krnl = 3
-stmp = 5
+krnl = 2
+stmp = 3
 ordr = 0
-nrstars = 200
+nrstars = 500
 
 #read in the master frame
-mlist = fits.open(caldir+'master.fits')
-mheader = mlist[0].header #get the header info
-mast = mlist[0].data #get the image info
+mast, mheader = fits.getdata(caldir+camera+'_'+ccd+'_master.fits', header = True)
 mean, median, std = sigma_clipped_stats(mast, sigma = 3.0, iters = 5)
-expm_time = pyfits.getval(caldir+'master.fits','EXPTIME')
+expm_time = pyfits.getval(caldir+camera+'_'+ccd+'_master.fits','EXPTIME')
 
 #subtract the background from the master frame
 nmast = mast-median
 
 #write the new master file
 mhd = fits.PrimaryHDU(nmast, header=mheader)
-shush = os.system('rm '+cdedir+'ref.fits')
-mhd.writeto(cdedir+'ref.fits')
-mlist.close()
+mhd.writeto(cdedir+'ref.fits', overwrite = True)
+expm_time = pyfits.getval(cdedir+'ref.fits', 'EXPTIME')*3600.*24.
 
 #get the image list and the number of files which need reduction
 os.chdir(clndir) #changes to the raw image direcotory
@@ -68,13 +69,14 @@ nfiles = len(files)
 os.chdir(cdedir) #changes back to the code directory
 
 #read in the star list
-ids, xx, yy = numpy.loadtxt(caldir+'starlist.txt', unpack = 1, delimiter = ',')
-ids1, xm, ym, mflx, mflx_er = numpy.loadtxt(caldir+'master.flux', unpack = 1, delimiter = ',')
+ids, xx, yy = numpy.loadtxt(caldir+camera+'_'+ccd+'_starlist.txt', unpack = 1, delimiter = ',')
+ids1, xm, ym, mflx, mflx_er = numpy.loadtxt(caldir+camera+'_'+ccd+'_master.flux', unpack = 1, usecols = (0,1,2,3,4), delimieter =',')
 
 #begin with the algorithm to difference the images
 for ii in range(0, nfiles):
-	hld = files[ii].split('_')
-	finnme = hld[0]+'_d'+hld[1]
+	hld = files[ii].split('.')
+	finnme = hld[0]+'dxx.'+hld[1]
+
 	#check to see if the differenced file already exists
 	if (os.path.isfile(difdir+finnme) == 0):
 		#read in the image
@@ -86,30 +88,29 @@ for ii in range(0, nfiles):
 		#write the new image file
 		nimg = img-median
 		ihd = fits.PrimaryHDU(nimg, header=iheader)
-		shush = os.system('rm '+cdedir+'img.fits')
-		ihd.writeto(cdedir+'img.fits')
-		exp_time = pyfits.getval(cdedir+'img.fits','EXPTIME')
-		jd = pyfits.getval(cdedir+'img.fits','JD')-2454000.0
+		ihd.writeto(cdedir+'img.fits', overwrite = True)
+		jd1 = pyfits.getval(cdedir+'img.fits','TSTART')
+		jd2 = pyfits.getval(cdedir+'img.fits','TSTOP')
+		exp_time = pyfits.getval(cdedir+'img.fits', 'EXPOSURE')*3600.*24.
+		jd = numpy.mean([jd1,jd2])
 		print 'Getting magnitudes from the star list at '+strftime("%a, %d %b %Y %H:%M:%S")+'.'
 
 		#determine the magnitudes, errors and distances to the objects
 		#prepare the apertures
 		positions = [xx,yy]
 		apertures = CircularAperture(positions, r = rad)
-		annulus_apertures = CircularAnnulus(positions, r_in=rad+2, r_out=rad+4)
 		
 		#get the photometry for the stars
 		rawflux = aperture_photometry(img, apertures)
 
-		#get the background
-		bkgflux = aperture_photometry(img, annulus_apertures)		
-		bkg_mean = bkgflux['aperture_sum']/annulus_apertures.area()
-		bkg_sum = bkg_mean*apertures.area()
+		#get the background	
+		bkg_mean = median
+		bkg_sum = bkg_mean*(numpy.pi*rad**2)
 
 		#get the star flux and error & mag and error
 		flx = rawflux['aperture_sum']-bkg_sum
 		flx_er = numpy.sqrt(rawflux['aperture_sum'])
-		mag = 25.-2.5*numpy.log10(flx)+2.5*numpy.log10(exp_time)
+		mag = 25.-2.5*numpy.log10(flx)
 		mag_er = (2.5/numpy.log(10.))*(flx_er/flx)
 
 		print 'Getting reference stars for the subtraction at '+strftime("%a, %d %b %Y %H:%M:%S")+'.'
@@ -124,20 +125,20 @@ for ii in range(0, nfiles):
 			#select a random object
 			jj = random.randint(0,len(x)-1)
 			if (mag_er[jj] > 0) and (mag_er[jj] < 0.02):
-				#get the nearest neightbors in 20 pix
-				d = numpy.sqrt((x[jj]-x)**2+(y[jj]-y)**2)
-				idx = numpy.where(d < 10)
+				#get the nearest neightbors in 3 pix
+				dist = numpy.sqrt((x[jj]-x)**2+(y[jj]-y)**2)
+				idx = numpy.where(dist < 3)
 				idxs = idx[0]
 				#assuming the star is alone and it is not near an edge
-				if (len(idxs) == 0) and (x[jj] < 3596) and (x[jj] > 500) and (y[jj] < 3596) and (y[jj] > 500):
-					output.write(str(x[jj])+' '+str(y[jj]))
+				if (len(idxs) == 1):
+					output.write("%4d %4d\n" % (x[jj],y[jj]))
 					cnt = cnt+1
 				else:
-					if (len(idxs) > 0) and (x[jj] < 3596) and (x[jj] > 500) and (y[jj] < 3596) and (y[jj] > 500):
+					if (len(idxs) > 0):
 						#check the magnitudes in case the neighbors are just faint stars
 						dmag = mag[jj]-mag[idxs]
 						cdmag = dmag[numpy.where(dmag != 0)]
-						chk = numpy.where(cdmag > -1.5)
+						chk = numpy.where(cdmag > 0)
 						if (len(chk[0]) == 0):
 							output.write("%4d %4d\n" % (x[jj],y[jj]))
 							cnt = cnt+1
@@ -180,15 +181,13 @@ for ii in range(0, nfiles):
 		#prepare the apertures
 		positions = [xx,yy]
 		apertures = CircularAperture(positions, r = rad)
-		annulus_apertures = CircularAnnulus(positions, r_in=rad+2, r_out=rad+4)
 		
 		#get the photometry for the stars
 		rawflux = aperture_photometry(dif, apertures)
 
-		#get the background
-		bkgflux = aperture_photometry(dif, annulus_apertures)		
-		bkg_mean = bkgflux['aperture_sum']/annulus_apertures.area()
-		bkg_sum = bkg_mean*apertures.area()
+		#get the background	
+		bkg_mean = median
+		bkg_sum = bkg_mean*(numpy.pi*rad**2)
 
 		#get the star flux and error & mag and error
 		flx = rawflux['aperture_sum']-bkg_sum
@@ -204,4 +203,4 @@ for ii in range(0, nfiles):
 			output.write(str(long(ids[jj]))+','+str(xm[jj])+','+str(ym[jj])+','+str(jd)+','+str(mag[jj])+','+str(mag_er[jj])+'\n')
 		output.close()
 		print 'Moving to the next file at '+strftime("%a, %d %b %Y %H:%M:%S")+'.'
-print 'Done with the photometry at '+strftime("%a, %d %b %Y %H:%M:%S")+'.'
+print 'All done at '+strftime("%a, %d %b %Y %H:%M:%S")+'. See ya later alligator!'
