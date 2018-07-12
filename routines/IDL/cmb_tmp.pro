@@ -9,9 +9,9 @@ camera = '2'
 ccd = '2'
 
 ;useful directories
-cdedir = '/home/oelkerrj/FFI/code/master/' ;code directory
-mstdir = '/home/oelkerrj/FFI/code/master/frames/' ;directory where the temporary master frames reside
-findir = '/home/oelkerrj/FFI/code/master/fin/' ;directory for the final master frame
+cdedir = '../code/master/' ;code directory
+mstdir = '../code/master/frames/' ;directory where the temporary master frames reside
+findir = '../code/master/fin/' ;directory for the final master frame
 ;;;;;;END UPDATE;;;;;;;;
 
 ;get the image list and the number of files which need reduction
