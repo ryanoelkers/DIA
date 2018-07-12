@@ -50,9 +50,9 @@ ordr = 0
 nrstars = 500
 
 #read in the master frame
-mast, mheader = fits.getdata(caldir+camera+'_'+ccd+'_master.fits', header = True)
+mast, mheader = fits.getdata(caldir+camera+'_'+ccd+'_master_py.fits', header = True)
 mean, median, std = sigma_clipped_stats(mast, sigma = 3.0, iters = 5)
-expm_time = pyfits.getval(caldir+camera+'_'+ccd+'_master.fits','EXPTIME')
+expm_time = pyfits.getval(caldir+camera+'_'+ccd+'_master_py.fits','EXPTIME')
 
 #subtract the background from the master frame
 nmast = mast-median
@@ -69,8 +69,8 @@ nfiles = len(files)
 os.chdir(cdedir) #changes back to the code directory
 
 #read in the star list
-ids, xx, yy = numpy.loadtxt(caldir+camera+'_'+ccd+'_starlist.txt', unpack = 1, delimiter = ',')
-ids1, xm, ym, mflx, mflx_er = numpy.loadtxt(caldir+camera+'_'+ccd+'_master.flux', unpack = 1, usecols = (0,1,2,3,4), delimieter =',')
+ids, xx, yy = numpy.loadtxt(caldir+camera+'_'+ccd+'_starlist_py.txt', unpack = 1, delimiter = ',')
+ids1, xm, ym, mflx, mflx_er = numpy.loadtxt(caldir+camera+'_'+ccd+'_master_py.flux', unpack = 1, usecols = (0,1,2,3,4), delimieter =',')
 
 #begin with the algorithm to difference the images
 for ii in range(0, nfiles):
@@ -109,8 +109,15 @@ for ii in range(0, nfiles):
 
 		#get the star flux and error & mag and error
 		flx = rawflux['aperture_sum']-bkg_sum
-		flx_er = numpy.sqrt(rawflux['aperture_sum'])
-		mag = 25.-2.5*numpy.log10(flx)
+		flx_er = numpy.sqrt(numpy.abs(rawflux['aperture_sum']))
+		gd_flx = numpy.where(flx > 0) #check against any negative flux values
+		if len(gd_flx[0] > 0):
+			flx = flx[gd_flx[0]]
+			flx_er = flx_er[gd_flx[0]]
+			x = xx[gd_flx[0]]
+			y = yy[gd_flx[0]]
+
+		mag = 25.0-2.5*numpy.log10(flx)
 		mag_er = (2.5/numpy.log(10.))*(flx_er/flx)
 
 		print 'Getting reference stars for the subtraction at '+strftime("%a, %d %b %Y %H:%M:%S")+'.'
@@ -118,13 +125,11 @@ for ii in range(0, nfiles):
 		output = open(cdedir+'refstars.txt', 'w')
 		cnt = 0
 		itr = 0
-		x = xx
-		y = yy
 
 		while (cnt < nrstars) and (itr < len(xx)):
 			#select a random object
 			jj = random.randint(0,len(x)-1)
-			if (mag_er[jj] > 0) and (mag_er[jj] < 0.02):
+			if (mag_er[jj] > 0) and (mag_er[jj] < 0.02) and (x[jj] > 50 and x[jj] < 1998) and (y[jj] > 50 and y[jj] < 1998):
 				#get the nearest neightbors in 3 pix
 				dist = numpy.sqrt((x[jj]-x)**2+(y[jj]-y)**2)
 				idx = numpy.where(dist < 3)
