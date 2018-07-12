@@ -12,9 +12,25 @@
 #include "fitsio.h"
 #include <time.h>
 
+void usage(char* exec_name);
+
 // Start the program to output a float //
-int main (void)
+int main (int argc, char* argv[])
 {
+
+    // Parse command line arguments
+    char *exec_name = argv[0];
+    ++argv; // Skip the invocation program name
+    --argc;
+    while ( argc > 0 ) {
+        if ( !strcmp(*argv, "-h") || !strcmp(*argv, "--help") ) {
+            usage(exec_name);
+            return EXIT_SUCCESS;
+        }
+        ++argv;
+        --argc;
+    }
+
     // Set up the integer index variables to be used (common ones) for loops //
     int i, j, k, h, t;
     clock_t begin, end;
@@ -477,3 +493,20 @@ int main (void)
     free(Ref);
 
 } // end of main file //
+
+
+void usage(char *exec_name) {
+    char *exec_basename = strrchr(exec_name, '/') + 1;
+    if (exec_basename == NULL) exec_basename = exec_name;
+    printf("%s\nAuthor: Ryan Oelkers (c)\n", exec_basename);
+    printf("------------------------\n\n");
+    printf("usage: %s [-h, --help]\n\n", exec_basename);
+    printf("Arguments:\n");
+    printf("\t-h, --help: Print this help and exit.\n");
+    printf("\n");
+    printf("Files needed by %s:\n", exec_basename);
+    printf("params.txt:\tThis should specify the half-width of the stamp size in pixels, the half-width of kernel side, the degree of polynomial variation and the number of reference stars (all integer numbers in that order).\n");
+    printf("refstars.txt: A 2-column list of x, y values for reference stars. The number of rows should match the number in params.txt.\n");
+    printf("ref.txt:\tThe name for the reference FITS image file.\n");
+    printf("img.txt:\tThe name for the science FITS image file.\n");
+}
