@@ -87,12 +87,14 @@ for ii in range(0, len(x)):
 		if (len(chk[0]) == 1):
 			#subtract the next highest radius mag from the current mag
 			for jj in range(1, len(rads)):
-				if (phot_table[ii][jj+3] > 0):
+				if (phot_table[ii][jj+3] > 0) and (phot_table[ii][jj+2] > 0):
 					mg1 = 25.-2.5*numpy.log10(phot_table[ii][jj+3])
-				if (phot_table[ii][jj+2] > 0):
+					snr1 = phot_table[ii][jj+3]/numpy.sqrt(phot_table[ii][jj+3])
 					mg0 = 25.-2.5*numpy.log10(phot_table[ii][jj+2])
-				if (numpy.isfinite(mg1)) and (numpy.isfinite(mg0)) and (mg1-mg0 > 0):
-					offset[jj,ii] = mg1-mg0
+					snr2 = phot_table[ii][jj+2]/numpy.sqrt(phot_table[ii][jj+2])
+					if (numpy.isfinite(mg1)) and (numpy.isfinite(mg0)) and (snr1 > 100) and (snr2 > 100) and (snr1 < 1000) and (snr2 < 1000):
+						offset[jj,ii] = numpy.abs(mg1-mg0)
+
 chk_off = numpy.zeros(len(rads)-1)
 chk_rad = rads[1:]
 for ii in range(1, len(rads)):
@@ -101,10 +103,11 @@ for ii in range(1, len(rads)):
 fin_rads = numpy.arange(chk_rad[0],chk_rad[-1],0.1)
 fin_off = numpy.interp(fin_rads,chk_rad,chk_off)
 
+opt_rad = fin_rads[0] #starting aperture to make sure if everything fails, there is still an aperture
 #select the smallest radius where the next highest radius has only a slight change in magnitude
 for ii in range(1, len(fin_off)):
 	diff = numpy.abs(fin_off[ii]-fin_off[ii-1])
-	if (diff < 0.001):
+	if (diff < 0.01):
 		opt_rad = fin_rads[ii-1]
 		break
 print 'The optimal aperture size is '+str(opt_rad)+'.'
@@ -125,26 +128,34 @@ x_pix = x
 y_pix = y
 
 #create the magnitudes from the flux
+#create the magnitudes from the flux
+gd_flx = numpy.where(flx > 0) #check against any negative flux values
+if len(gd_flx[0] > 0):
+	flx = flx[gd_flx[0]]
+	flx_er = flx_er[gd_flx[0]]
+	x_pix = x_pix[gd_flx[0]]
+	y_pix = y_pix[gd_flx[0]]
+	ticid = ticid[gd_flx[0]]
 mag = 25.0-2.5*numpy.log10(flx)
 err = (2.5/numpy.log(10.))*(flx_er/flx)
 
-#write the magnitudes to a file
+#open and write the output files
 output = open(caldir+camera+'_'+ccd+'_master_py.ap', 'w')
-for ii in range(0, len(phot_table['id'])):
+for ii in range(0, len(x_pix)):
 	if (x_pix[ii] > 0) and (x_pix[ii] < 2048) and (y_pix[ii] > 0) and (y_pix[ii] < 2048) and (numpy.isnan(mag[ii]) != 1):
-		output.write(str(long(ticid[ii]))+','+str(x_pix[ii])+','+str(y_pix[ii])+','+str(tmag[ii])+','+str(mag[ii])+','+str(err[ii])+'\n')
+		output.write(str(long(ticid[ii]))+','+str(x_pix[ii])+','+str(y_pix[ii])+','+str(mag[ii])+','+str(err[ii])+'\n')
 output.close()
 
 #write the fluxes to a file
 output = open(caldir+camera+'_'+ccd+'_master_py.flux', 'w')
-for ii in range(0, len(phot_table['id'])):
+for ii in range(0, len(x_pix)):
 	if (x_pix[ii] > 0) and (x_pix[ii] < 2048) and (y_pix[ii] > 0) and (y_pix[ii] < 2048) and (numpy.isnan(mag[ii]) != 1):
 		output.write(str(long(ticid[ii]))+','+str(x_pix[ii])+','+str(y_pix[ii])+','+str(flx[ii])+','+str(flx_er[ii])+'\n')
 output.close()
 
 #write the star list to a file
 output = open(caldir+camera+'_'+ccd+'_starlist_py.txt', 'w')
-for ii in range(0, len(phot_table['id'])):
+for ii in range(0, len(x_pix)):
 	if (x_pix[ii] > 0) and (x_pix[ii] < 2048) and (y_pix[ii] > 0) and (y_pix[ii] < 2048) and (numpy.isnan(mag[ii]) != 1):
 		output.write(str(long(ticid[ii]))+','+str(long(x_pix[ii]))+','+str(long(y_pix[ii]))+'\n')
 output.close()
