@@ -65,7 +65,7 @@ for ii = 0L, nfiles-1 do begin
 
 		;if you want to bias subtract and flat divide do it here
 		if biassub eq 1 then a = (a-bias)
-		if flatdiv eq 1 then a = a/flatdiv
+		if flatdiv eq 1 then a = a/flat
 
 		;Calculate sky statistics
 		kp = where(a gt -100. and a lt 25000.)
