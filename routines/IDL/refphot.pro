@@ -38,7 +38,7 @@ apr = dindgen(32)/4.+2.;;set apertures from 2 to 10 in size
 tor = [2,4];;dummy holder for the torus
 
 ;read in the reference file for photometry
-ref = readfits(caldir+'2_2_master.fits', mhead, /silent)
+ref = readfits(caldir+camera'_'+ccd+'_master_idl.fits', mhead, /silent)
 
 print, 'Getting flux information from master frame at '+systime()+'.'
 
@@ -96,15 +96,15 @@ ticid = ticid[good] & tmag = tmag[good] & x = x[good] & y = y[good] & flux = flu
 skyer = skyer[good]& fsky = fsky[good] & fskyer = fskyer[good] & mags = mags[good] & errap = errap[good]
 
 ;write magnitude information
-openw, 1, caldir+camera+'_'+ccd+'_master.ap'
+openw, 1, caldir+camera+'_'+ccd+'_master_idl.ap'
 for i = 0L, n_elements(x) -1 do printf, 1, ticid[i], x[i], y[i], tmag[i], mags[i], errap[i], sky[i], skyer[i], format = '(i0, 1x, d0,1x, d0, 1x,d0,1x,d0,1x,d0,1x,d0, 1x, d0)'
 close, 1
 ;write the flux information
-openw, 1, caldir+camera+'_'+ccd+'_master.flux'
+openw, 1, caldir+camera+'_'+ccd+'_master_idl.flux'
 for i = 0L, n_elements(x) -1 do printf, 1, ticid[i], x[i], y[i], flux[i], fluxer[i], fsky[i],fskyer[i], format = '(i0, 1x, d0,1x, d0,1x,d0,1x,d0,1x,d0, 1x, d0)'
 close, 1
 ;write the star list of differencing 
-openw, 1, caldir+camera+'_'+ccd+'_starlist.txt'
+openw, 1, caldir+camera+'_'+ccd+'_starlist_idl.txt'
 for i = 0L, n_elements(x) -1 do printf, 1, ticid[i], x[i], y[i], format = '(i0,1x,d0,1x,d0)'
 close, 1
 
