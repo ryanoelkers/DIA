@@ -9,7 +9,6 @@ camera = '2'
 ccd = '2'
 blknum = 50 ;how many images go into each holder?
 
-;this program will select the images to make the E and W master frames
 ;useful directories
 cdedir = '.../code/master/' ;code directory
 clndir = '../clean/' ;directory where the cleaned images reside
