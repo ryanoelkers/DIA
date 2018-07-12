@@ -22,10 +22,9 @@ camera = '2'
 ccd = '2'
 blknum = 50 #how many images go into each holder?
 
-#this program will select the images to make the E and W master frames
 #useful directories
-cdedir = '/home/oelkerrj/FFI/code/master/' #code directory
-clndir = '/net/jovan/export/jovan/oelkerrj/FFI/test/clean/' #directory where the cleaned images reside
+cdedir = '../code/master/' #code directory
+clndir = '../clean/' #directory where the cleaned images reside
 
 ###END UPDATE###
 
