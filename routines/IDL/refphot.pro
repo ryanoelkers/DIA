@@ -73,15 +73,16 @@ endfor
 
 ;now find when the change in mags is < 0.001
 prv = 1.
+opt_apr = apr[0] ; set the initial aperture to be the smallest, in case something fails below
 for ii = 1l, n_elements(apr)-1 do begin
-	chk = median(offset[ii,*])
+	meanclip, offset[ii,*], chk, schk, clipsig = 2.5, maxiter = 1000
 	if abs(chk-prv) lt 0.001 then begin
-		print, 'The optimal aperture is '+strcompress(apr[ii], /remove_all)+' pixels.'
 		opt_apr = apr[ii]
 		break
 	endif
 	if abs(chk-prv) ge 0.001 then prv = chk;if the change is larger than 1mmag continue
 endfor
+print, 'The optimal aperture is '+strcompress(apr[ii], /remove_all)+' pixels.'
 
 ;do the aperture photometry on those stars in both flux and magnitude space
 aper, ref, x, y, mags, errap, sky, skyer, gain, opt_apr, tor,[-100, 55000], /silent, setskyval = skym
