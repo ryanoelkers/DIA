@@ -22,9 +22,9 @@ camera = '2'
 ccd = '2'
 
 #useful directories
-cdedir = '/home/oelkerrj/FFI/code/master/' #code directory
-mstdir = '/home/oelkerrj/FFI/code/master/frames/' #directory where the cleaned images reside
-findir = '/home/oelkerrj/FFI/code/master/fin/' #directory for the final master frame
+cdedir = '../code/master/' #code directory
+mstdir = '../code/master/frames/' #directory where the cleaned images reside
+findir = '../code/master/fin/' #directory for the final master frame
 ###END UPDATE###
 
 #get the image list and the number of files which need reduction
@@ -63,9 +63,11 @@ new_image.header.set('NUMCOMB', np.sum(num))
 new_image.header.set('EXPTIME', np.median(expt))
 
 #print the file with the appropriate counter
-new_image.writeto(findir+camera+'_'+ccd+'_master.fits',clobber=True)
+new_image.writeto(findir+camera+'_'+ccd+'_master_py.fits',clobber=True)
 
 print "The master frame was created using a median of "+str(np.sum(num))+" images."
+
+print "All done. See ya later alligator!"
 
 del all_data, img_data # clear up some memory
 
