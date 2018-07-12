@@ -24,7 +24,7 @@ nfiles = n_elements(files)
 cd, cdedir
 
 ;read in the master frame information to get the star count
-readcol, caldir+camera+'_'+ccd+'_master.ap', id, xm, ym,ttmg, mstmg, mstmge, format = '(l, f, f, f, f, f)', /silent, count = nstars
+readcol, caldir+camera+'_'+ccd+'_master_idl.ap', id, xm, ym, ttmg, mstmg, mstmge, format = '(l, f, f, f, f, f)', /silent, count = nstars
 jd = fltarr(nfiles)
 mg = fltarr(nfiles, nstars)-99.00
 er = fltarr(nfiles, nstars)-99.00
