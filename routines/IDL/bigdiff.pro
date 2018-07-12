@@ -29,12 +29,12 @@ ccd = '2'
 ;;;END UPDATE INFORMATION;;;;
 
 ;get the master frame and photometry
-ref = readfits(caldir+camera+'_'+ccd+'_master.fits', rhead,/silent)
-readcol, caldir+camera+'_'+ccd+'_master.flux', id, xm, ym, mflux, mfluxe, format = '(l, f, f, f, f)', /silent
+ref = readfits(caldir+camera+'_'+ccd+'_master_idl.fits', rhead,/silent)
+readcol, caldir+camera+'_'+ccd+'_master_idl.flux', id, xm, ym, mflux, mfluxe, format = '(l, f, f, f, f)', /silent
 mexpt = sxpar(rhead, 'EXPTIME')*3600.*24.
 
 ;move the reference stars
-spawn, 'cp '+caldir+camera+'_'+ccd+'_starlist.txt ./ref_stars.txt'
+spawn, 'cp '+caldir+camera+'_'+ccd+'_starlist_idl.txt ./ref_stars.txt'
 
 ;read in the reference stars
 readcol, 'ref_stars.txt', idx, xr, yr, format = '(i,f,f)', /silent, count = nrstars
