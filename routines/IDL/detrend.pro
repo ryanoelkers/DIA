@@ -22,6 +22,7 @@ s = sort(mg)
 for ii =0l, nstars-1 do begin
 	;read in the light curves based on magnitude
 	readcol, lcdir+nme[s[ii]], j, m, e, format = '(f,f,f)', /silent, count=nobs
+	big[ii,*] = m
 	if (ii mod 1000 eq 0 and ii gt 0) then print, '1000 light curves read in at '+systime()
 endfor
 
