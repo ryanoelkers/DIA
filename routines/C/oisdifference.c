@@ -43,6 +43,10 @@ int main (int argc, char* argv[])
     
     //parameters set by the user//
     fp = fopen("./parms.txt", "r");
+    if (fp == NULL){
+        printf("Couldn't open file parms.txt.\n");
+        return EXIT_FAILURE;
+    }
     for (i = 0; i < 1; i++){
         fscanf(fp, "%i %i %i %i", &fwhm, &w, &d, &nstars);} // read in the star list //
     
@@ -55,11 +59,18 @@ int main (int argc, char* argv[])
     int xc[nstars], yc[nstars];
     
     fr = fopen("./ref.txt", "r");
-   
+    if (fr == NULL){
+        printf("Couldn't open file ref.txt.\n");
+        return EXIT_FAILURE;
+    }
     for (i = 0; i < 1; i++){
         fscanf(fr, "%s\n", listr[i]);} // read in the list of references //
     
     fs = fopen("./refstars.txt", "r");
+    if (fs == NULL) {
+        printf("Couldn't open file refstars.txt.\n");
+        return EXIT_FAILURE;
+    }
     
     for (i = 0; i < nstars; i++){
         xc[i] = 0;
@@ -109,7 +120,10 @@ int main (int argc, char* argv[])
         
     sprintf(sname, "./img.txt");
     fl = fopen(sname,"r");
-        
+    if (fl == NULL){
+        printf("Couldn't open file img.txt.\n");
+        return EXIT_FAILURE;
+    }
     for (i = 0; i < 1; i++){
         fscanf(fl, "%s\n", listn[i]);} // read in file names only //
     
