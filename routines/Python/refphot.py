@@ -50,6 +50,7 @@ mean, median, std = sigma_clipped_stats(mast, sigma = 3.0, iters = 5)
 positions = (sources['xcentroid'], sources['ycentroid'])
 x = sources['xcentroid']
 y = sources['ycentroid']
+ticid = numpy.array(range(len(x)))
 
 ###END POSSIBLE UNCOMMENT###
 
