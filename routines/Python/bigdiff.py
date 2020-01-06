@@ -70,7 +70,7 @@ os.chdir(cdedir) #changes back to the code directory
 
 #read in the star list
 ids, xx, yy = numpy.loadtxt(caldir+camera+'_'+ccd+'_starlist_py.txt', unpack = 1, delimiter = ',')
-ids1, xm, ym, mflx, mflx_er = numpy.loadtxt(caldir+camera+'_'+ccd+'_master_py.flux', unpack = 1, usecols = (0,1,2,3,4), delimieter =',')
+ids1, xm, ym, mflx, mflx_er = numpy.loadtxt(caldir+camera+'_'+ccd+'_master_py.flux', unpack = 1, usecols = (0,1,2,3,4), delimiter =',')
 
 #begin with the algorithm to difference the images
 for ii in range(0, nfiles):
